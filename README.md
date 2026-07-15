@@ -101,6 +101,27 @@ Akses aplikasi di: `http://localhost:8000`
 
 Proyek ini dilengkapi CI/CD otomatis via **GitHub Actions** yang akan berjalan setiap kali ada push ke branch `main`.
 
+### Struktur File di Server cPanel
+
+```
+~/tepatstore/              ← root subdomain (semua file diupload ke sini)
+├── .htaccess              ← redirect semua request ke public/  ✅
+├── public/                ← web entry point Laravel
+│   ├── index.php
+│   ├── .htaccess
+│   └── build/             ← hasil npm run build (JS/CSS assets)
+├── app/
+├── bootstrap/
+├── config/
+├── resources/
+├── routes/
+├── storage/
+├── vendor/                ← diinstall langsung di server via SSH
+└── ...
+```
+
+> **Cara kerjanya:** `.htaccess` di root folder me-redirect semua request browser ke `public/`, sehingga Laravel berjalan normal meskipun semua file ada di satu folder.
+
 ### GitHub Secrets yang Harus Dikonfigurasi
 
 Tambahkan secrets berikut di **GitHub → Settings → Secrets and Variables → Actions**:
@@ -111,13 +132,14 @@ Tambahkan secrets berikut di **GitHub → Settings → Secrets and Variables →
 | `FTP_USERNAME` | Username FTP cPanel |
 | `FTP_PASSWORD` | Password FTP cPanel |
 | `FTP_PORT` | Port FTP (default: `21`) |
-| `FTP_SERVER_DIR` | Direktori tujuan di server (contoh: `/tepatstore/`) |
+| `FTP_SERVER_DIR` | Root subdomain di server: `/tepatstore/` |
 | `SSH_HOST` | Hostname SSH cPanel |
 | `SSH_USERNAME` | Username SSH cPanel |
 | `SSH_PRIVATE_KEY` | Isi lengkap private key SSH (-----BEGIN ... KEY-----) |
 | `SSH_PASSPHRASE` | Passphrase private key SSH (kosongkan jika tidak ada) |
 | `SSH_PORT` | Port SSH (default: `22`) |
-| `APP_PATH` | Path aplikasi di server (contoh: `~/tepatstore`) |
+| `APP_PATH` | Path app di server: `~/tepatstore` |
+
 
 ### Proses CI/CD
 
