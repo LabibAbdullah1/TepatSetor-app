@@ -120,6 +120,16 @@ jobs:
             # Install Composer dependencies di server
             composer install --no-dev --optimize-autoloader --no-interaction
 
+            # Buat folder storage yang dibutuhkan Laravel
+            mkdir -p storage/framework/views
+            mkdir -p storage/framework/cache/data
+            mkdir -p storage/framework/sessions
+            mkdir -p storage/app/public
+            mkdir -p bootstrap/cache
+
+            # Set permissions
+            chmod -R 755 storage bootstrap/cache
+
             php artisan migrate --force
             php artisan config:cache
             php artisan route:cache
