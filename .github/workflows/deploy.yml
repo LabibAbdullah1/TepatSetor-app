@@ -18,7 +18,7 @@ name: 🚀 Deploy TepatSetor ke cPanel
 #   SSH_PRIVATE_KEY   → isi private key SSH (-----BEGIN...-----END)
 #   SSH_PASSPHRASE    → passphrase key (boleh kosong)
 #   SSH_PORT          → port SSH (default 22)
-#   APP_PATH          → path app di server (contoh: ~/tepatstore)
+#   APP_PATH          → path app di server: /home/sublymyi/tepatsetor
 # ──────────────────────────────────────────────────────────────
 
 on:
@@ -111,8 +111,9 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           passphrase: ${{ secrets.SSH_PASSPHRASE }}
           port: ${{ secrets.SSH_PORT || 22 }}
+          script_stop: true
           script: |
-            cd ${{ secrets.APP_PATH || '~/tepatstore' }}
+            cd ${{ secrets.APP_PATH }}
 
             # Install Composer dependencies di server
             composer install --no-dev --optimize-autoloader --no-interaction
