@@ -114,7 +114,8 @@ Tambahkan secrets berikut di **GitHub → Settings → Secrets and Variables →
 | `FTP_SERVER_DIR` | Direktori tujuan di server (contoh: `/tepatstore/`) |
 | `SSH_HOST` | Hostname SSH cPanel |
 | `SSH_USERNAME` | Username SSH cPanel |
-| `SSH_PASSWORD` | Password SSH cPanel |
+| `SSH_PRIVATE_KEY` | Isi lengkap private key SSH (-----BEGIN ... KEY-----) |
+| `SSH_PASSPHRASE` | Passphrase private key SSH (kosongkan jika tidak ada) |
 | `SSH_PORT` | Port SSH (default: `22`) |
 | `APP_PATH` | Path aplikasi di server (contoh: `~/tepatstore`) |
 

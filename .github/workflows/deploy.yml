@@ -47,7 +47,7 @@ jobs:
       # 5. Install NPM dependencies & Build assets
       # ─────────────────────────────────────────
       - name: 📦 Install NPM Dependencies
-        run: npm ci
+        run: npm ci --legacy-peer-deps
 
       - name: 🏗️ Build Frontend Assets
         run: npm run build
@@ -121,7 +121,8 @@ jobs:
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
-          password: ${{ secrets.SSH_PASSWORD }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          passphrase: ${{ secrets.SSH_PASSPHRASE }}
           port: ${{ secrets.SSH_PORT || 22 }}
           script: |
             cd ${{ secrets.APP_PATH || '~/tepatstore' }}
