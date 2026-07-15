@@ -1,58 +1,194 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
-
 <p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
+  <img src="public/tepatsetor-logo.svg" width="80" alt="TepatSetor Logo" />
 </p>
 
-## About Laravel
+<h1 align="center">TepatSetor</h1>
+<p align="center">
+  <strong>Sistem Pelaporan Setoran Kas Pribadi</strong><br/>
+  Hitung, laporkan, dan kelola setoran tunai Anda secara efisien dan akurat.
+</p>
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+<p align="center">
+  <img src="https://img.shields.io/badge/Laravel-13.x-FF2D20?style=for-the-badge&logo=laravel&logoColor=white" alt="Laravel" />
+  <img src="https://img.shields.io/badge/PHP-8.3-777BB4?style=for-the-badge&logo=php&logoColor=white" alt="PHP" />
+  <img src="https://img.shields.io/badge/React-18.x-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React" />
+  <img src="https://img.shields.io/badge/Inertia.js-2.x-9553E9?style=for-the-badge&logo=inertia&logoColor=white" alt="Inertia.js" />
+  <img src="https://img.shields.io/badge/License-MIT-10b981?style=for-the-badge" alt="MIT License" />
+</p>
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+---
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## 📋 Tentang TepatSetor
 
-## Learning Laravel
+**TepatSetor** adalah aplikasi web berbasis Laravel + React (Inertia.js) yang dirancang khusus untuk membantu bendahara dan pengelola keuangan mencatat, menghitung, dan melaporkan setoran kas tunai secara terstruktur dan profesional.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### ✨ Fitur Utama
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+- **Kalkulator Setoran Kas** — Hitung total setoran berdasarkan pecahan uang kertas Indonesia secara otomatis dan real-time.
+- **Manajemen Rekening Tujuan** — Daftarkan rekening bank tujuan setoran langsung dari profil pengguna.
+- **Laporan PDF Profesional** — Generate laporan setoran dalam format PDF lengkap dengan bukti transfer dan rincian pecahan uang.
+- **Upload Bukti Setoran** — Upload foto/scan bukti transfer (gambar atau PDF) dengan kompresi otomatis.
+- **Berbagi via WhatsApp** — Kirim ringkasan setoran langsung ke WhatsApp dengan satu klik.
+- **Dual Tema** — Tampilan mode Gelap dan Terang yang bisa dipilih pengguna.
+- **Desain Responsif** — Tampilan optimal di desktop (sidebar) dan mobile (fixed bottom navigation).
+- **Multi-device** — Akun dapat digunakan dari beberapa perangkat secara bersamaan.
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+---
 
-## Agentic Development
+## 🛠️ Teknologi
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+| Layer | Teknologi |
+|---|---|
+| Backend Framework | Laravel 13.x |
+| Frontend | React 18 + TypeScript |
+| SPA Bridge | Inertia.js 2.x |
+| Styling | Tailwind CSS 3.x |
+| UI Components | Headless UI, Lucide React |
+| PDF Generator | DomPDF (barryvdh/laravel-dompdf) |
+| Image Processing | Intervention Image 4.x |
+| Authentication | Laravel Breeze |
+| Database | MySQL |
+
+---
+
+## 🚀 Instalasi Lokal
+
+### Prasyarat
+- PHP >= 8.3
+- Composer
+- Node.js >= 20
+- MySQL
+
+### Langkah Instalasi
 
 ```bash
-composer require laravel/boost --dev
+# 1. Clone repository
+git clone https://github.com/username/tepatsetor-app.git
+cd tepatsetor-app
 
-php artisan boost:install
+# 2. Install dependencies
+composer install
+npm install
+
+# 3. Konfigurasi environment
+cp .env.example .env
+php artisan key:generate
+
+# 4. Konfigurasi database di .env
+# DB_HOST=127.0.0.1
+# DB_DATABASE=tepatsetor
+# DB_USERNAME=root
+# DB_PASSWORD=
+
+# 5. Jalankan migrasi
+php artisan migrate
+
+# 6. Buat symlink storage
+php artisan storage:link
+
+# 7. Build frontend assets
+npm run build
+
+# 8. Jalankan server lokal
+php artisan serve
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+Akses aplikasi di: `http://localhost:8000`
 
-## Contributing
+---
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## 🌐 Deployment ke cPanel
 
-## Code of Conduct
+Proyek ini dilengkapi CI/CD otomatis via **GitHub Actions** yang akan berjalan setiap kali ada push ke branch `main`.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### GitHub Secrets yang Harus Dikonfigurasi
 
-## Security Vulnerabilities
+Tambahkan secrets berikut di **GitHub → Settings → Secrets and Variables → Actions**:
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+| Secret | Keterangan |
+|---|---|
+| `FTP_SERVER` | Hostname/IP FTP server cPanel |
+| `FTP_USERNAME` | Username FTP cPanel |
+| `FTP_PASSWORD` | Password FTP cPanel |
+| `FTP_PORT` | Port FTP (default: `21`) |
+| `FTP_SERVER_DIR` | Direktori tujuan di server (contoh: `/tepatstore/`) |
+| `SSH_HOST` | Hostname SSH cPanel |
+| `SSH_USERNAME` | Username SSH cPanel |
+| `SSH_PASSWORD` | Password SSH cPanel |
+| `SSH_PORT` | Port SSH (default: `22`) |
+| `APP_PATH` | Path aplikasi di server (contoh: `~/tepatstore`) |
 
-## License
+### Proses CI/CD
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+1. ✅ Checkout kode dari GitHub
+2. ✅ Install Composer dependencies (production only, tanpa dev)
+3. ✅ Install NPM & build frontend assets (`npm run build`)
+4. ✅ Exclude file non-produksi (`node_modules`, `tests`, `.env`, source JS/CSS, dsb.)
+5. ✅ Upload file ke cPanel via FTP
+6. ✅ Jalankan artisan commands via SSH (`migrate`, `config:cache`, `route:cache`, `view:cache`, `storage:link`)
+
+### Konfigurasi `.env` di Server
+
+Setelah deploy pertama, buat file `.env` di root direktori server:
+
+```env
+APP_NAME=TepatSetor
+APP_ENV=production
+APP_KEY=           # Akan di-generate ulang
+APP_DEBUG=false
+APP_URL=https://subdomain.domain.anda
+
+DB_CONNECTION=mysql
+DB_HOST=localhost
+DB_PORT=3306
+DB_DATABASE=nama_database
+DB_USERNAME=user_database
+DB_PASSWORD=password_database
+
+FILESYSTEM_DISK=local
+```
+
+Lalu jalankan: `php artisan key:generate`
+
+---
+
+## 📁 Struktur Folder Penting
+
+```
+tepatsetor-app/
+├── app/
+│   ├── Http/Controllers/
+│   │   ├── DepositController.php    # Logika setoran kas
+│   │   └── BankAccountController.php # Manajemen rekening
+│   └── Models/
+│       ├── Deposit.php
+│       ├── DepositDetail.php
+│       └── BankAccount.php
+├── resources/
+│   ├── js/
+│   │   ├── Pages/                   # Halaman React (Inertia)
+│   │   ├── Components/              # Komponen reusable
+│   │   └── Layouts/                 # Layout utama & guest
+│   └── views/pdf/                   # Template laporan PDF
+├── storage/app/private/deposits/    # Bukti setoran (private)
+├── .github/workflows/deploy.yml     # CI/CD workflow
+└── .env.example                     # Template environment
+```
+
+---
+
+## 🔒 Keamanan
+
+- File bukti setoran disimpan di direktori **private** (`storage/app/private/`), tidak bisa diakses langsung via URL publik.
+- Akses file bukti setoran dilindungi middleware autentikasi.
+- Semua credentials disimpan sebagai **GitHub Secrets** dan tidak di-commit ke repository.
+
+---
+
+## 📄 Lisensi
+
+Proyek ini dilisensikan di bawah [MIT License](LICENSE).
+
+---
+
+<p align="center">Dibuat dengan ❤️ menggunakan Laravel & React</p>

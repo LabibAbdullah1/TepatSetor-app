@@ -1,0 +1,133 @@
+name: 🚀 Deploy TepatSetor ke cPanel
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    name: Build & Deploy ke cPanel
+    runs-on: ubuntu-latest
+
+    steps:
+      # ─────────────────────────────────────────
+      # 1. Checkout kode dari repository
+      # ─────────────────────────────────────────
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      # ─────────────────────────────────────────
+      # 2. Setup Node.js untuk build frontend
+      # ─────────────────────────────────────────
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      # ─────────────────────────────────────────
+      # 3. Setup PHP untuk autoload optimization
+      # ─────────────────────────────────────────
+      - name: 🐘 Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, bcmath, pdo, pdo_mysql, gd, exif, fileinfo, zip
+          coverage: none
+
+      # ─────────────────────────────────────────
+      # 4. Install Composer dependencies (production only)
+      # ─────────────────────────────────────────
+      - name: 📦 Install Composer Dependencies (Production)
+        run: composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
+
+      # ─────────────────────────────────────────
+      # 5. Install NPM dependencies & Build assets
+      # ─────────────────────────────────────────
+      - name: 📦 Install NPM Dependencies
+        run: npm ci
+
+      - name: 🏗️ Build Frontend Assets
+        run: npm run build
+
+      # ─────────────────────────────────────────
+      # 6. Siapkan artifact folder (hanya file production)
+      # ─────────────────────────────────────────
+      - name: 📁 Siapkan Artifact Deployment
+        run: |
+          mkdir -p deploy_package
+          rsync -av \
+            --exclude='node_modules/' \
+            --exclude='.git/' \
+            --exclude='.github/' \
+            --exclude='tests/' \
+            --exclude='.env' \
+            --exclude='.env.backup' \
+            --exclude='.env.production' \
+            --exclude='storage/app/private/' \
+            --exclude='storage/logs/' \
+            --exclude='storage/framework/cache/' \
+            --exclude='storage/framework/sessions/' \
+            --exclude='storage/framework/views/' \
+            --exclude='*.log' \
+            --exclude='.DS_Store' \
+            --exclude='Thumbs.db' \
+            --exclude='phpunit.xml' \
+            --exclude='.phpunit.cache/' \
+            --exclude='.prettierrc' \
+            --exclude='.eslintrc.json' \
+            --exclude='tailwind.config.js' \
+            --exclude='tsconfig.json' \
+            --exclude='vite.config.js' \
+            --exclude='postcss.config.js' \
+            --exclude='package.json' \
+            --exclude='package-lock.json' \
+            --exclude='.npmrc' \
+            --exclude='components.json' \
+            --exclude='resources/js/' \
+            --exclude='resources/css/' \
+            . deploy_package/
+
+      # ─────────────────────────────────────────
+      # 7. Upload ke cPanel via FTP
+      # ─────────────────────────────────────────
+      - name: 📤 Deploy ke cPanel via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          port: ${{ secrets.FTP_PORT || 21 }}
+          local-dir: ./deploy_package/
+          server-dir: ${{ secrets.FTP_SERVER_DIR || '/tepatstore/' }}
+          dangerous-clean-slate: false
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            **/storage/logs/**
+            **/storage/framework/cache/**
+            **/storage/framework/sessions/**
+            **/storage/framework/views/**
+            **/.env
+
+      # ─────────────────────────────────────────
+      # 8. Jalankan artisan commands di server via SSH
+      # ─────────────────────────────────────────
+      - name: ⚙️ Jalankan Post-Deploy Commands (via SSH)
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          script: |
+            cd ${{ secrets.APP_PATH || '~/tepatstore' }}
+            php artisan migrate --force
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
+            php artisan storage:link
+            echo "✅ Deploy berhasil!"
