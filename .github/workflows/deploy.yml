@@ -12,7 +12,7 @@ name: 🚀 Deploy TepatSetor ke cPanel
 #   FTP_USERNAME      → username FTP
 #   FTP_PASSWORD      → password FTP
 #   FTP_PORT          → port FTP (default 21)
-#   FTP_SERVER_DIR    → root subdomain di server (contoh: /tepatstore/)
+#   FTP_SERVER_DIR    → biarkan '/' karena FTP root cPanel sudah di folder subdomain
 #   SSH_HOST          → hostname SSH
 #   SSH_USERNAME      → username SSH
 #   SSH_PRIVATE_KEY   → isi private key SSH (-----BEGIN...-----END)
@@ -79,7 +79,7 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           port: ${{ secrets.FTP_PORT || 21 }}
           local-dir: ./
-          server-dir: ${{ secrets.FTP_SERVER_DIR || '/tepatstore/' }}
+          server-dir: ${{ secrets.FTP_SERVER_DIR || '/' }}
           dangerous-clean-slate: false
           exclude: |
             **/.git*

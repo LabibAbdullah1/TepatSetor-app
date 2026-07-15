@@ -132,7 +132,7 @@ Tambahkan secrets berikut di **GitHub → Settings → Secrets and Variables →
 | `FTP_USERNAME` | Username FTP cPanel |
 | `FTP_PASSWORD` | Password FTP cPanel |
 | `FTP_PORT` | Port FTP (default: `21`) |
-| `FTP_SERVER_DIR` | Root subdomain di server: `/tepatstore/` |
+| `FTP_SERVER_DIR` | Biarkan `/` — FTP root cPanel sudah di folder subdomain |
 | `SSH_HOST` | Hostname SSH cPanel |
 | `SSH_USERNAME` | Username SSH cPanel |
 | `SSH_PRIVATE_KEY` | Isi lengkap private key SSH (-----BEGIN ... KEY-----) |
