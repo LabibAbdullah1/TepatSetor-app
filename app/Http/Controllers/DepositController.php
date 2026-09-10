@@ -316,13 +316,13 @@ class DepositController extends Controller
     }
 
     /**
-     * Generate PDF report with QR verification stamp and auto-cleanup old files (Publicly accessible).
+     * Generate PDF report with dynamic versioned QR verification stamp and auto-cleanup old files.
      */
     public function generatePdf($uuid)
     {
         $deposit = Deposit::with(['details', 'bankAccount', 'categories'])->where('uuid', $uuid)->firstOrFail();
 
-        // Cleanup any old PDF files for this UUID first
+        // Cleanup any old cached PDF files for this UUID first
         $this->cleanupPdfStorage($uuid);
 
         // Fallback signers: if deposit signers is empty, use default_signers if available
@@ -344,19 +344,30 @@ class DepositController extends Controller
             }
         }
 
-        // Generate standard web URL payload for QR code
-        $verificationUrl = route('deposit.pdf', $deposit->uuid);
+        // Versioned URL parameter based on updated_at timestamp to ensure QR code matrix updates on data changes & prevents browser caching
+        $versionTimestamp = $deposit->updated_at ? $deposit->updated_at->timestamp : time();
+        $verificationUrl = route('deposit.pdf', $deposit->uuid) . '?v=' . $versionTimestamp;
+        
         $qrCodeBase64 = QrCodeHelper::generateBase64Svg($verificationUrl, 90);
 
         $pdf = Pdf::loadView('pdf.deposit-report', compact('deposit', 'signers', 'base64Image', 'qrCodeBase64'));
         
+        $pdfOutput = $pdf->output();
+
         $pdfPath = 'private/pdfs/laporan_setoran_' . $deposit->uuid . '.pdf';
-        // Save the newly generated PDF
-        Storage::put($pdfPath, $pdf->output());
+        // Save the newly generated PDF version
+        Storage::put($pdfPath, $pdfOutput);
 
         $filename = 'laporan_setoran_' . $deposit->deposit_date->format('Y_m_d') . '_' . substr($deposit->uuid, 0, 8) . '.pdf';
         
-        return $pdf->stream($filename);
+        // Return stream with cache-busting headers so mobile browsers always fetch fresh PDF
+        return response($pdfOutput, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="' . $filename . '"',
+            'Cache-Control' => 'no-cache, no-store, must-revalidate',
+            'Pragma' => 'no-cache',
+            'Expires' => '0',
+        ]);
     }
 
     /**
