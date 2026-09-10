@@ -87,6 +87,12 @@ class DepositController extends Controller
                     }
                 }
 
+                // Compare with user profile default_signers. If identical to default, store NULL so it remains dynamic to future Profile updates!
+                $userDefault = $request->user()->default_signers;
+                $signersToSave = $this->isSameSigners($signers, $userDefault)
+                    ? null
+                    : (count($signers) > 0 ? array_values($signers) : null);
+
                 $proofImagePath = null;
                 if ($request->hasFile('proof_image')) {
                     $file = $request->file('proof_image');
@@ -115,7 +121,7 @@ class DepositController extends Controller
                 $deposit = Deposit::create([
                     'deposit_date' => $request->input('deposit_date'),
                     'notes' => $request->input('notes'),
-                    'signers' => count($signers) > 0 ? array_values($signers) : null,
+                    'signers' => $signersToSave,
                     'grand_total' => $grandTotal,
                     'status' => $request->input('status'),
                     'proof_image_path' => $proofImagePath,
@@ -207,6 +213,12 @@ class DepositController extends Controller
                     }
                 }
 
+                // Compare with user profile default_signers. If identical to default, store NULL so it remains dynamic to future Profile updates!
+                $userDefault = $request->user()->default_signers;
+                $signersToSave = $this->isSameSigners($signers, $userDefault)
+                    ? null
+                    : (count($signers) > 0 ? array_values($signers) : null);
+
                 $proofImagePath = $deposit->proof_image_path;
                 if ($request->hasFile('proof_image')) {
                     // Delete old file
@@ -240,7 +252,7 @@ class DepositController extends Controller
                 $deposit->update([
                     'deposit_date' => $request->input('deposit_date'),
                     'notes' => $request->input('notes'),
-                    'signers' => count($signers) > 0 ? array_values($signers) : null,
+                    'signers' => $signersToSave,
                     'grand_total' => $grandTotal,
                     'status' => $request->input('status'),
                     'proof_image_path' => $proofImagePath,
@@ -325,13 +337,13 @@ class DepositController extends Controller
         // Cleanup any old cached PDF files for this UUID first
         $this->cleanupPdfStorage($uuid);
 
-        // Fallback signers: if deposit signers is empty, use default_signers if available
+        // Dynamic signers resolution:
+        // If deposit has custom overridden signers, use them.
+        // Otherwise, dynamically fetch the latest default_signers from Profile so updates in Profile apply to all non-overridden reports!
         $signers = $deposit->signers;
-        if (empty($signers)) {
-            $user = request()->user() ?: \App\Models\User::first();
-            if ($user && $user->default_signers) {
-                $signers = $user->default_signers;
-            }
+        $user = request()->user() ?: \App\Models\User::first();
+        if (empty($signers) && $user && !empty($user->default_signers)) {
+            $signers = $user->default_signers;
         }
 
         $base64Image = null;
@@ -379,5 +391,20 @@ class DepositController extends Controller
         if (Storage::exists($path)) {
             Storage::delete($path);
         }
+    }
+
+    /**
+     * Helper to check if submitted signers match the profile default_signers.
+     */
+    private function isSameSigners(?array $signers1, ?array $signers2): bool
+    {
+        if (empty($signers1) && empty($signers2)) return true;
+        if (empty($signers1) || empty($signers2)) return false;
+        
+        // Clean array structure comparison
+        $clean1 = array_values(array_filter($signers1, fn($s) => !empty($s['name']) || !empty($s['title'])));
+        $clean2 = array_values(array_filter($signers2, fn($s) => !empty($s['name']) || !empty($s['title'])));
+
+        return json_encode($clean1) === json_encode($clean2);
     }
 }
