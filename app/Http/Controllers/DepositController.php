@@ -316,7 +316,7 @@ class DepositController extends Controller
     }
 
     /**
-     * Generate PDF report with QR verification stamp and auto-cleanup old files.
+     * Generate PDF report with QR verification stamp and auto-cleanup old files (Publicly accessible).
      */
     public function generatePdf($uuid)
     {
@@ -325,10 +325,13 @@ class DepositController extends Controller
         // Cleanup any old PDF files for this UUID first
         $this->cleanupPdfStorage($uuid);
 
-        // Fallback signers: if deposit signers is empty, use user default_signers if available
+        // Fallback signers: if deposit signers is empty, use default_signers if available
         $signers = $deposit->signers;
-        if (empty($signers) && request()->user() && request()->user()->default_signers) {
-            $signers = request()->user()->default_signers;
+        if (empty($signers)) {
+            $user = request()->user() ?: \App\Models\User::first();
+            if ($user && $user->default_signers) {
+                $signers = $user->default_signers;
+            }
         }
 
         $base64Image = null;
@@ -341,7 +344,7 @@ class DepositController extends Controller
             }
         }
 
-        // Generate standard web URL payload for QR code so Google Lens / Camera recognizes it as a clickable web link
+        // Generate standard web URL payload for QR code
         $verificationUrl = route('deposit.pdf', $deposit->uuid);
         $qrCodeBase64 = QrCodeHelper::generateBase64Svg($verificationUrl, 90);
 

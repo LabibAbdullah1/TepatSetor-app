@@ -16,6 +16,9 @@ Route::get('/', function () {
     ]);
 });
 
+// Public PDF report & verification route (accessible by scanning QR Code without login)
+Route::get('/deposit/pdf/{uuid}', [DepositController::class, 'generatePdf'])->name('deposit.pdf');
+
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DepositController::class, 'index'])->name('dashboard');
     
@@ -27,9 +30,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     
     // Secure proof image route
     Route::get('/deposit/proof/{uuid}', [DepositController::class, 'serveProof'])->name('deposit.proof');
-    
-    // PDF generator route
-    Route::get('/deposit/pdf/{uuid}', [DepositController::class, 'generatePdf'])->name('deposit.pdf');
 });
 
 Route::middleware('auth')->group(function () {
