@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\QrCodeHelper;
 use App\Http\Requests\StoreDepositRequest;
 use App\Http\Requests\UpdateDepositRequest;
 use App\Models\Deposit;
-use App\Models\DepositDetail;
+use App\Models\DepositCategory;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -23,7 +24,7 @@ class DepositController extends Controller
      */
     public function index()
     {
-        $deposits = Deposit::with(['details', 'bankAccount'])
+        $deposits = Deposit::with(['details', 'bankAccount', 'categories'])
             ->orderBy('deposit_date', 'desc')
             ->orderBy('created_at', 'desc')
             ->get();
@@ -43,6 +44,7 @@ class DepositController extends Controller
         return Inertia::render('DepositForm', [
             'deposit' => null,
             'bankAccounts' => request()->user()->bankAccounts()->orderBy('bank_name')->get(),
+            'defaultSigners' => request()->user()->default_signers,
         ]);
     }
 
@@ -67,6 +69,22 @@ class DepositController extends Controller
                         'quantity' => $qty,
                         'subtotal' => $subtotal,
                     ];
+                }
+
+                // Process signers array (filter empty entries)
+                $rawSigners = $request->input('signers', []);
+                $signers = [];
+                if (is_array($rawSigners)) {
+                    foreach ($rawSigners as $signer) {
+                        $name = trim($signer['name'] ?? '');
+                        $title = trim($signer['title'] ?? '');
+                        if (!empty($name) || !empty($title)) {
+                            $signers[] = [
+                                'name' => $name,
+                                'title' => $title,
+                            ];
+                        }
+                    }
                 }
 
                 $proofImagePath = null;
@@ -97,6 +115,7 @@ class DepositController extends Controller
                 $deposit = Deposit::create([
                     'deposit_date' => $request->input('deposit_date'),
                     'notes' => $request->input('notes'),
+                    'signers' => count($signers) > 0 ? array_values($signers) : null,
                     'grand_total' => $grandTotal,
                     'status' => $request->input('status'),
                     'proof_image_path' => $proofImagePath,
@@ -105,6 +124,21 @@ class DepositController extends Controller
 
                 foreach ($detailsData as $detail) {
                     $deposit->details()->create($detail);
+                }
+
+                // Store categories breakdown if present
+                $rawCategories = $request->input('categories', []);
+                if (is_array($rawCategories)) {
+                    foreach ($rawCategories as $cat) {
+                        $catName = trim($cat['category_name'] ?? '');
+                        $amount = floatval($cat['amount'] ?? 0);
+                        if (!empty($catName) && $amount > 0) {
+                            $deposit->categories()->create([
+                                'category_name' => $catName,
+                                'amount' => $amount,
+                            ]);
+                        }
+                    }
                 }
             });
 
@@ -119,12 +153,13 @@ class DepositController extends Controller
      */
     public function edit($uuid)
     {
-        $deposit = Deposit::with('details')->where('uuid', $uuid)->firstOrFail();
+        $deposit = Deposit::with(['details', 'categories'])->where('uuid', $uuid)->firstOrFail();
         $bankAccounts = request()->user()->bankAccounts()->orderBy('bank_name')->get();
 
         return Inertia::render('DepositForm', [
             'deposit' => $deposit,
             'bankAccounts' => $bankAccounts,
+            'defaultSigners' => request()->user()->default_signers,
         ]);
     }
 
@@ -136,6 +171,9 @@ class DepositController extends Controller
         try {
             DB::transaction(function () use ($request, $uuid) {
                 $deposit = Deposit::where('uuid', $uuid)->firstOrFail();
+
+                // Delete any old generated PDF for this deposit so files don't accumulate
+                $this->cleanupPdfStorage($deposit->uuid);
 
                 // Calculate grand total
                 $grandTotal = 0;
@@ -151,6 +189,22 @@ class DepositController extends Controller
                         'quantity' => $qty,
                         'subtotal' => $subtotal,
                     ];
+                }
+
+                // Process signers array
+                $rawSigners = $request->input('signers', []);
+                $signers = [];
+                if (is_array($rawSigners)) {
+                    foreach ($rawSigners as $signer) {
+                        $name = trim($signer['name'] ?? '');
+                        $title = trim($signer['title'] ?? '');
+                        if (!empty($name) || !empty($title)) {
+                            $signers[] = [
+                                'name' => $name,
+                                'title' => $title,
+                            ];
+                        }
+                    }
                 }
 
                 $proofImagePath = $deposit->proof_image_path;
@@ -186,6 +240,7 @@ class DepositController extends Controller
                 $deposit->update([
                     'deposit_date' => $request->input('deposit_date'),
                     'notes' => $request->input('notes'),
+                    'signers' => count($signers) > 0 ? array_values($signers) : null,
                     'grand_total' => $grandTotal,
                     'status' => $request->input('status'),
                     'proof_image_path' => $proofImagePath,
@@ -196,6 +251,22 @@ class DepositController extends Controller
                 $deposit->details()->delete();
                 foreach ($detailsData as $detail) {
                     $deposit->details()->create($detail);
+                }
+
+                // Sync categories
+                $deposit->categories()->delete();
+                $rawCategories = $request->input('categories', []);
+                if (is_array($rawCategories)) {
+                    foreach ($rawCategories as $cat) {
+                        $catName = trim($cat['category_name'] ?? '');
+                        $amount = floatval($cat['amount'] ?? 0);
+                        if (!empty($catName) && $amount > 0) {
+                            $deposit->categories()->create([
+                                'category_name' => $catName,
+                                'amount' => $amount,
+                            ]);
+                        }
+                    }
                 }
             });
 
@@ -218,7 +289,10 @@ class DepositController extends Controller
                     Storage::delete($deposit->proof_image_path);
                 }
 
-                $deposit->delete(); // Cascading delete will handle details automatically via DB constraint
+                // Delete any generated PDF file stored for this deposit
+                $this->cleanupPdfStorage($uuid);
+
+                $deposit->delete(); // Cascading delete will handle details & categories
             });
 
             return redirect()->route('dashboard')->with('success', 'Laporan setoran berhasil dihapus.');
@@ -242,11 +316,20 @@ class DepositController extends Controller
     }
 
     /**
-     * Generate PDF report.
+     * Generate PDF report with QR verification stamp and auto-cleanup old files.
      */
     public function generatePdf($uuid)
     {
-        $deposit = Deposit::with(['details', 'bankAccount'])->where('uuid', $uuid)->firstOrFail();
+        $deposit = Deposit::with(['details', 'bankAccount', 'categories'])->where('uuid', $uuid)->firstOrFail();
+
+        // Cleanup any old PDF files for this UUID first
+        $this->cleanupPdfStorage($uuid);
+
+        // Fallback signers: if deposit signers is empty, use user default_signers if available
+        $signers = $deposit->signers;
+        if (empty($signers) && request()->user() && request()->user()->default_signers) {
+            $signers = request()->user()->default_signers;
+        }
 
         $base64Image = null;
         if ($deposit->proof_image_path && Storage::exists($deposit->proof_image_path)) {
@@ -258,10 +341,29 @@ class DepositController extends Controller
             }
         }
 
-        $pdf = Pdf::loadView('pdf.deposit-report', compact('deposit', 'base64Image'));
+        // Generate standard web URL payload for QR code so Google Lens / Camera recognizes it as a clickable web link
+        $verificationUrl = route('deposit.pdf', $deposit->uuid);
+        $qrCodeBase64 = QrCodeHelper::generateBase64Svg($verificationUrl, 90);
+
+        $pdf = Pdf::loadView('pdf.deposit-report', compact('deposit', 'signers', 'base64Image', 'qrCodeBase64'));
         
-        $filename = 'laporan_setoran_' . $deposit->deposit_date->format('Y_m_d') . '_' . $deposit->uuid . '.pdf';
+        $pdfPath = 'private/pdfs/laporan_setoran_' . $deposit->uuid . '.pdf';
+        // Save the newly generated PDF
+        Storage::put($pdfPath, $pdf->output());
+
+        $filename = 'laporan_setoran_' . $deposit->deposit_date->format('Y_m_d') . '_' . substr($deposit->uuid, 0, 8) . '.pdf';
         
         return $pdf->stream($filename);
+    }
+
+    /**
+     * Helper to clean up any cached/overridden PDF files for a given UUID.
+     */
+    private function cleanupPdfStorage(string $uuid): void
+    {
+        $path = 'private/pdfs/laporan_setoran_' . $uuid . '.pdf';
+        if (Storage::exists($path)) {
+            Storage::delete($path);
+        }
     }
 }

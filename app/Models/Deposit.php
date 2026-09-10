@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
@@ -14,6 +13,7 @@ class Deposit extends Model
         'uuid',
         'deposit_date',
         'notes',
+        'signers',
         'grand_total',
         'status',
         'proof_image_path',
@@ -30,6 +30,7 @@ class Deposit extends Model
         return [
             'deposit_date' => 'date',
             'grand_total' => 'integer',
+            'signers' => 'array',
         ];
     }
 
@@ -50,6 +51,14 @@ class Deposit extends Model
     public function details(): HasMany
     {
         return $this->hasMany(DepositDetail::class);
+    }
+
+    /**
+     * Get the category breakdown for the deposit.
+     */
+    public function categories(): HasMany
+    {
+        return $this->hasMany(DepositCategory::class);
     }
 
     /**
