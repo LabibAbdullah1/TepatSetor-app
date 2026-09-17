@@ -47,7 +47,7 @@ export default function Login({ status }: { status?: string }) {
                         onChange={(e) => setData('username', e.target.value)}
                     />
 
-                    <InputError message={errors.username || errors.email} className="mt-2" />
+                    <InputError message={errors.username} className="mt-2" />
                 </div>
 
                 <div className="mt-4">
