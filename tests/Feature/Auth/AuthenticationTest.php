@@ -30,6 +30,21 @@ class AuthenticationTest extends TestCase
         $response->assertRedirect(route('dashboard', absolute: false));
     }
 
+    public function test_users_can_authenticate_using_username_field_and_non_email_format(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'adminuser123',
+        ]);
+
+        $response = $this->post('/login', [
+            'username' => 'adminuser123',
+            'password' => 'password',
+        ]);
+
+        $this->assertAuthenticated();
+        $response->assertRedirect(route('dashboard', absolute: false));
+    }
+
     public function test_users_can_not_authenticate_with_invalid_password(): void
     {
         $user = User::factory()->create();
