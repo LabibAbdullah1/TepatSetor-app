@@ -120,6 +120,12 @@ const DENOM_COLORS: Record<
     },
 };
 
+const formatNumberWithDots = (val: number | string): string => {
+    if (val === '' || val === 0 || val === '0' || val === null || val === undefined) return '';
+    const rawDigits = String(val).replace(/\D/g, '');
+    return rawDigits ? rawDigits.replace(/\B(?=(\d{3})+(?!\d))/g, '.') : '';
+};
+
 export default function DepositForm({
     deposit,
     bankAccounts = [],
@@ -580,17 +586,18 @@ export default function DepositForm({
                                                         Rp
                                                     </span>
                                                     <input
-                                                        type="number"
-                                                        min="0"
+                                                        type="text"
+                                                        inputMode="numeric"
                                                         placeholder="0"
-                                                        value={cat.amount === 0 ? '' : cat.amount}
-                                                        onChange={(e) =>
+                                                        value={formatNumberWithDots(cat.amount)}
+                                                        onChange={(e) => {
+                                                            const raw = e.target.value.replace(/\D/g, '');
                                                             handleCategoryChange(
                                                                 idx,
                                                                 'amount',
-                                                                e.target.value === '' ? 0 : parseFloat(e.target.value),
-                                                            )
-                                                        }
+                                                                raw === '' ? 0 : parseInt(raw, 10),
+                                                            );
+                                                        }}
                                                         className="w-full rounded-lg border-zinc-200 py-1 pl-8 pr-2 text-right text-xs font-bold shadow-sm focus:border-primary focus:ring focus:ring-primary/20 dark:border-zinc-800 dark:bg-zinc-900 dark:text-gray-100"
                                                     />
                                                 </div>
